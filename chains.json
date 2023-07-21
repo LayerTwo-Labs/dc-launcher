@@ -1,0 +1,45 @@
+{
+    "drivechain": {
+        "id": "drivechain",
+        "name": "Drivechain",
+        "description": "BIP 300 & 301 enabled bitcoin",
+        "imageUrl": "",
+        "binName": "drivechain-qt",
+        "defaultDir": ".drivechain",
+        "defaultConfName": "drivechain.conf",
+        "defaultPort": 18443 
+    },
+    "testchain": {
+        "id": "testchain",
+        "name": "Testchain",
+        "description": "A blank sidechain, based on Bitcoin Core 16.99",
+        "imageUrl": "",
+        "binName": "testchain",
+        "defaultDir": ".testchain",
+        "defaultConfName": "testchain.conf",
+        "defaultPort": 19000,
+        "defaultSlot": 1
+    },
+    "bitassets": {
+        "id": "bitassets",
+        "name": "BitAssets",
+        "description": "A sidechain for issuing Bit-Art (NFTs) and digital assets (ICOs, tokens)",
+        "imageUrl": "",
+        "binName": "bitassets",
+        "defaultDir": ".bitassets",
+        "defaultConfName": "bitassets.conf",
+        "defaultPort": 19001,
+        "defaultSlot": 2
+    },
+    "namecoin": {
+        "id": "namecoin",
+        "name": "Namecoin",
+        "description": "Register a name, and use it for email, Telegram, .onion, payments, and more",
+        "imageUrl": "",
+        "binName": "namecoin",
+        "defaultDir": ".namecoin",
+        "defaultConfName": "namecoin.conf",
+        "defaultPort": 19002,
+        "defaultSlot": 3
+    }
+}

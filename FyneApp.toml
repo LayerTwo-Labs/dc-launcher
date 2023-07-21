@@ -1,0 +1,8 @@
+Website = "https://github.com/ismyhc/dc-launcher"
+
+[Details]
+  Icon = "AppIcon.png"
+  Name = "Drivechain Launcher"
+  ID = "com.layertwolabs.dclauncher"
+  Version = "0.1.0"
+  Build = 1
