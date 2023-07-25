@@ -11,13 +11,13 @@ func main() {
 	err := ConfInit(as)
 	if err != nil {
 		println(err.Error())
-		panic(err)
+		// panic(err)
 	}
 
 	mui = NewMainUI(as)
 	mui.Refresh()
 
-	StartDrivechainStateUpdate(as, mui)
+	// StartDrivechainStateUpdate(as, mui)
 
 	// Set intercept to shutdown chains if needed
 	mui.as.w.ShowAndRun()

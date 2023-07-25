@@ -37,6 +37,20 @@ type RPCRefreshBMMResponse struct {
 	ID     string           `json:"id"`
 }
 
+type RPCCreateSidechainProposalResponse struct {
+	Result []ActiveSidechain `json:"result"`
+	Error  interface{}       `json:"error"`
+	ID     string            `json:"id"`
+}
+
+type ActiveSidechain struct {
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	NVersion    int    `json:"nsersion"`
+	HashId1     string `json:"hashid1"`
+	HashId2     string `json:"hashid2"`
+}
+
 type RefreshBMMResult struct {
 	HashLastMainBlock      string `json:"hash_last_main_block"`
 	BmmBlockCreated        string `json:"bmm_block_created"`

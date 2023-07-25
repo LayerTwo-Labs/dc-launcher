@@ -5,9 +5,9 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
+	"runtime"
 	"strconv"
 	"strings"
 )
@@ -18,6 +18,9 @@ const (
 
 //go:embed binaries/drivechain-qt-linux
 var drivechainLinux []byte
+
+//go:embed binaries/testchain-qt-linux
+var testchainLinux []byte
 
 //go:embed chain.conf
 var chainConfBytes []byte
@@ -55,7 +58,7 @@ func ConfInit(as *AppState) error {
 	}
 
 	// Now read in the chains.json file
-	chains, err := ioutil.ReadFile(defaultChainProvidersConf)
+	chains, err := os.ReadFile(defaultChainProvidersConf)
 	if err != nil {
 		println(err.Error())
 		return err
@@ -104,31 +107,37 @@ func ConfInit(as *AppState) error {
 		chainData.ConfName = chainProvider.DefaultConfName
 		chainData.BinDir = confDir
 		chainData.ConfDir = confDir
-		chainData.Port = chainProvider.DefaultPort
-		if k != "drivechain" {
-			chainData.Slot = chainProvider.DefaultSlot
-		}
+
 		err = loadConf(&chainData)
 		if err != nil {
 			println(err.Error())
 			return err
 		}
 
-		// fmt.Print("%+v\n", chainData)
+		chainData.Port = chainProvider.DefaultPort
+		if k != "drivechain" {
+			chainData.Slot = chainProvider.DefaultSlot
+		}
 
 		if k == "drivechain" {
 			as.dcd = chainData
 			as.dcs = ChainState{ID: k}
 		} else {
 			as.scd[k] = chainData
-			as.scs[k] = ChainState{ID: k}
+			as.scs[k] = ChainState{ID: k, Slot: chainData.Slot}
 		}
 
-		// Write chain binary if not found
+		// Write chain binary
+		// TODO: Only drivechain and testchain are supported for now
+		if k == "drivechain" || k == "testchain" {
+			err = writeBinary(&chainData)
+			if err != nil {
+				println(err.Error())
+				return err
+			}
+		}
 
 	}
-
-	// No
 
 	return nil
 }
@@ -157,7 +166,7 @@ func loadConf(chainData *ChainData) error {
 		if len(a) == 2 {
 			k := strings.TrimSpace(a[0])
 			v := strings.TrimSpace(a[1])
-			println(k + " = " + v)
+			// println(k + " = " + v)
 			if k != "" {
 				iv, err := (strconv.ParseInt(v, 0, 64))
 				if err != nil {
@@ -175,5 +184,28 @@ func loadConf(chainData *ChainData) error {
 		println(err.Error())
 		return err
 	}
+	return nil
+}
+
+func writeBinary(cd *ChainData) error {
+	var binBytes []byte
+	binDir := cd.BinDir + string(os.PathSeparator) + cd.BinName
+	target := runtime.GOOS
+	switch target {
+	case "linux":
+		switch cd.ID {
+		case "drivechain":
+			binBytes = drivechainLinux
+		case "testchain":
+			binBytes = testchainLinux
+		}
+	}
+	if len(binBytes) > 0 {
+		err := os.WriteFile(binDir, binBytes, 0o755)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
