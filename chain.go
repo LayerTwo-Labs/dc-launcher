@@ -45,6 +45,7 @@ type ChainState struct {
 	PendingBalance   float64 `json:"pendingbalance"`
 	Height           int     `json:"height,omitempty"`
 	Slot             int     `json:"slot,omitempty"` // Only apply to sidechains
+	Automine         bool    `json:"automine,omitempty"`
 	ChainStateUpdate ChainStateUpdate
 }
 
@@ -133,6 +134,9 @@ func StartChainStateUpdate(cd *ChainData, cs *ChainState, mui *MainUI) {
 		for {
 			select {
 			case <-cs.ChainStateUpdate.timer.C:
+				if cd.ID == "drivechain" && cs.Automine {
+					DrivechainMine(mui.as, mui)
+				}
 				updateUI := false
 				if GetBlockHeight(cd, cs) && !updateUI {
 					mui.as.scs[cd.ID] = *cs

@@ -7,6 +7,7 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
@@ -28,6 +29,28 @@ func NewMainUI(as *AppState) *MainUI {
 		footerContainer:  container.NewVBox(),
 		as:               as,
 	}
+
+	menus := fyne.NewMainMenu(&fyne.Menu{
+		Label: "File",
+		Items: []*fyne.MenuItem{
+			{Label: "Reset Everything", Action: func() {
+				dialog.NewConfirm("Reset Everything", "This will delete all data and settings for Drivechain and Sidechains.", func(b bool) {
+					if b {
+						pu := widget.NewModalPopUp(widget.NewLabel("Resetting, please wait..."), mui.as.w.Canvas())
+						pu.Show()
+						err := ResetEverything(mui.as)
+						if err != nil {
+							println(err.Error())
+						}
+						pu.Hide()
+						mui.as.w.Content().Refresh()
+					}
+				}, as.w).Show()
+			}},
+		},
+	})
+
+	as.w.SetMainMenu(menus)
 
 	lv := container.NewVBox()
 
@@ -67,16 +90,16 @@ func NewDrivechainRow(mui *MainUI, cp ChainProvider, c *fyne.Container) Drivecha
 		Title:  widget.NewRichTextWithText(cp.Name),
 		Desc:   widget.NewRichTextWithText(cp.Description),
 		Blocks: widget.NewRichTextWithText("Blocks: " + strconv.Itoa(mui.as.dcs.Height)),
-		StartButton: widget.NewButtonWithIcon("", mui.as.t.Icon(StartIcon), func() {
+		StartButton: widget.NewButtonWithIcon("Launch Chain", mui.as.t.Icon(StartIcon), func() {
 			pu := widget.NewModalPopUp(widget.NewLabel("Launching Drivechain..."), mui.as.w.Canvas())
-			// TODO: Make a better way for this than arbitrary time
 			pu.Show()
 			time.AfterFunc(time.Duration(1)*time.Second, func() {
 				pu.Hide()
 			})
 			LaunchChain(&mui.as.dcd, &mui.as.dcs, mui)
 		}),
-		StopButton: widget.NewButtonWithIcon("", mui.as.t.Icon(StopIcon), func() {
+		StopButton: widget.NewButtonWithIcon("Stop Chain", mui.as.t.Icon(StopIcon), func() {
+			mui.as.dcs.Automine = false
 			pu := widget.NewModalPopUp(widget.NewLabel("Stoping Drivechain..."), mui.as.w.Canvas())
 			pu.Show()
 			time.AfterFunc(time.Duration(1)*time.Second, func() {
@@ -84,19 +107,20 @@ func NewDrivechainRow(mui *MainUI, cp ChainProvider, c *fyne.Container) Drivecha
 			})
 			StopChain(&mui.as.dcd, &mui.as.dcs, mui.as)
 		}),
-		MineButton: widget.NewButtonWithIcon("", mui.as.t.Icon(MineIcon), func() {
-			DrivechainMine(mui.as, mui)
-			pu := widget.NewModalPopUp(widget.NewLabel("Mining 1 Block..."), mui.as.w.Canvas())
-			pu.Show()
-			time.AfterFunc(time.Duration(250)*time.Millisecond, func() {
-				pu.Hide()
-			})
+		MineButton: widget.NewButtonWithIcon("Start Mining", mui.as.t.Icon(MineIcon), func() {
+			mui.as.dcs.Automine = false
+			mui.Refresh()
 		}),
 	}
 
+	dcr.StartButton.Alignment = widget.ButtonAlignTrailing
+	dcr.StartButton.IconPlacement = widget.ButtonIconTrailingText
 	dcr.StartButton.Importance = widget.HighImportance
-	dcr.StopButton.Importance = widget.DangerImportance
-	dcr.MineButton.Importance = widget.HighImportance
+
+	dcr.StopButton.Alignment = widget.ButtonAlignTrailing
+	dcr.StopButton.IconPlacement = widget.ButtonIconTrailingText
+	dcr.MineButton.Alignment = widget.ButtonAlignTrailing
+	dcr.MineButton.IconPlacement = widget.ButtonIconTrailingText
 
 	dcr.Title.Segments[0].(*widget.TextSegment).Style = widget.RichTextStyle{
 		Alignment: fyne.TextAlignLeading,
@@ -128,7 +152,8 @@ func NewDrivechainRow(mui *MainUI, cp ChainProvider, c *fyne.Container) Drivecha
 
 	stk := container.NewStack(bck)
 
-	brdr := container.NewBorder(nil, container.NewVBox(&layout.Spacer{FixHorizontal: true, FixVertical: true}, widget.NewSeparator(), ftr), nil, container.NewVBox(dcr.StartButton, dcr.StopButton, dcr.MineButton), container.NewVBox(dcr.Title, dcr.Desc))
+	brdr := container.NewBorder(nil, container.NewVBox(&layout.Spacer{FixHorizontal: true, FixVertical: true}, widget.NewSeparator(), ftr), nil,
+		container.NewVBox(dcr.StartButton, dcr.StopButton, dcr.MineButton), container.NewVBox(dcr.Title, dcr.Desc))
 	stk.Add(container.NewPadded(container.NewPadded(brdr)))
 	c.Add(stk)
 	return dcr
@@ -143,6 +168,23 @@ func (dcr *DrivechainRow) Refresh(mui *MainUI) {
 		dcr.StartButton.Enable()
 		dcr.MineButton.Disable()
 		dcr.StopButton.Disable()
+	}
+	if mui.as.dcs.Automine {
+		dcr.MineButton.Importance = widget.MediumImportance
+		dcr.MineButton.SetText("Stop Mining")
+		dcr.MineButton.OnTapped = func() {
+			mui.as.dcs.Automine = false
+			mui.Refresh()
+		}
+		dcr.MineButton.Refresh()
+	} else {
+		dcr.MineButton.Importance = widget.HighImportance
+		dcr.MineButton.SetText("Start Mining")
+		dcr.MineButton.OnTapped = func() {
+			mui.as.dcs.Automine = true
+			mui.Refresh()
+		}
+		dcr.MineButton.Refresh()
 	}
 	mui.driveChainRow.Blocks.Segments[0].(*widget.TextSegment).Text = "Blocks: " + strconv.Itoa(mui.as.dcs.Height)
 	mui.driveChainRow.Blocks.Refresh()
@@ -163,7 +205,7 @@ func NewSidechainRow(mui *MainUI, cp ChainProvider, c *fyne.Container) Sidechain
 		Title:  widget.NewRichTextWithText(cp.Name),
 		Desc:   widget.NewRichTextWithText(cp.Description),
 		Blocks: widget.NewRichTextWithText("Blocks: " + strconv.Itoa(mui.as.scs[cp.ID].Height)),
-		StartButton: widget.NewButtonWithIcon("", mui.as.t.Icon(StartIcon), func() {
+		StartButton: widget.NewButtonWithIcon("Launch Chain", mui.as.t.Icon(StartIcon), func() {
 			cd := mui.as.scd[cp.ID]
 			cs := mui.as.scs[cp.ID]
 			if NeedsActivation(&cd, mui.as) {
@@ -189,7 +231,7 @@ func NewSidechainRow(mui *MainUI, cp ChainProvider, c *fyne.Container) Sidechain
 				LaunchChain(&cd, &cs, mui)
 			}
 		}),
-		StopButton: widget.NewButtonWithIcon("", mui.as.t.Icon(StopIcon), func() {
+		StopButton: widget.NewButtonWithIcon("Stop Chain", mui.as.t.Icon(StopIcon), func() {
 			pu := widget.NewModalPopUp(widget.NewLabel(fmt.Sprintf("Stoping %s...", cp.Name)), mui.as.w.Canvas())
 			pu.Show()
 			time.AfterFunc(time.Duration(1)*time.Second, func() {
@@ -202,8 +244,11 @@ func NewSidechainRow(mui *MainUI, cp ChainProvider, c *fyne.Container) Sidechain
 		ChainProivder: cp,
 	}
 
-	// scr.StartButton.Importance = widget.HighImportance
-	scr.StopButton.Importance = widget.DangerImportance
+	scr.StartButton.Alignment = widget.ButtonAlignTrailing
+	scr.StartButton.IconPlacement = widget.ButtonIconTrailingText
+	scr.StartButton.Importance = widget.HighImportance
+	scr.StopButton.Alignment = widget.ButtonAlignTrailing
+	scr.StopButton.IconPlacement = widget.ButtonIconTrailingText
 
 	scr.Title.Segments[0].(*widget.TextSegment).Style = widget.RichTextStyle{
 		Alignment: fyne.TextAlignLeading,

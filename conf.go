@@ -22,11 +22,54 @@ var drivechainLinux []byte
 //go:embed binaries/testchain-qt-linux
 var testchainLinux []byte
 
+//go:embed binaries/bitassets-qt-linux
+var bitassetsLinux []byte
+
 //go:embed chain.conf
 var chainConfBytes []byte
 
 //go:embed chains.json
 var chainsBytes []byte
+
+func ResetEverything(as *AppState) error {
+	// Stop all chains
+	// Stoping Drivechain will also stop sidechains
+	err := StopChain(&as.dcd, &as.dcs, as)
+	if err != nil {
+		println(err.Error())
+	}
+
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		println(err.Error())
+	}
+
+	err = os.RemoveAll(homeDir + string(os.PathSeparator) + ".dclauncher")
+	if err != nil {
+		println(err.Error())
+	}
+
+	err = os.RemoveAll(homeDir + string(os.PathSeparator) + ".drivechain")
+	if err != nil {
+		println(err.Error())
+	}
+
+	for _, chainData := range as.scd {
+		err = os.RemoveAll(chainData.ConfDir)
+		if err != nil {
+			println(err.Error())
+		}
+	}
+
+	go func() {
+		as.dcs.ChainStateUpdate.quit <- struct{}{}
+		for _, chainState := range as.scs {
+			chainState.ChainStateUpdate.quit <- struct{}{}
+		}
+	}()
+
+	return ConfInit(as)
+}
 
 func ConfInit(as *AppState) error {
 	homeDir, err := os.UserHomeDir()
@@ -129,7 +172,7 @@ func ConfInit(as *AppState) error {
 
 		// Write chain binary
 		// TODO: Only drivechain and testchain are supported for now
-		if k == "drivechain" || k == "testchain" {
+		if k == "drivechain" || k == "testchain" || k == "bitassets" {
 			err = writeBinary(&chainData)
 			if err != nil {
 				println(err.Error())
@@ -198,6 +241,8 @@ func writeBinary(cd *ChainData) error {
 			binBytes = drivechainLinux
 		case "testchain":
 			binBytes = testchainLinux
+		case "bitassets":
+			binBytes = bitassetsLinux
 		}
 	}
 	if len(binBytes) > 0 {
