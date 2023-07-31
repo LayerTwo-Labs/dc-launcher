@@ -48,7 +48,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: ismyhc/dc-launcher
-          # path: dc-launcher
+          path: dc-launcher
 
       - name: Cache build artifacts
         uses: actions/cache@v2
