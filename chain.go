@@ -12,6 +12,7 @@ import (
 )
 
 type ChainProvider struct {
+	Order           int    `json:"order"`
 	ID              string `json:"id"`
 	Name            string `json:"name"`
 	Description     string `json:"description"`

@@ -1,5 +1,6 @@
 {
     "drivechain": {
+        "order": 0,
         "id": "drivechain",
         "name": "Drivechain",
         "description": "BIP 300 & 301 enabled bitcoin",
@@ -10,6 +11,7 @@
         "defaultPort": 18443 
     },
     "testchain": {
+        "order": 1,
         "id": "testchain",
         "name": "Testchain",
         "description": "A blank sidechain, based on Bitcoin Core 16.99",
@@ -21,6 +23,7 @@
         "defaultSlot": 0
     },
     "bitassets": {
+        "order": 2,
         "id": "bitassets",
         "name": "BitAssets",
         "description": "A sidechain for issuing Bit-Art (NFTs) and digital assets (ICOs, tokens)",
