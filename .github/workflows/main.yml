@@ -84,4 +84,4 @@ jobs:
             ${{ matrix.target.os }} \
             ${{ matrix.target.args }} \
             -debug -no-cache \
-            -name calculator${{ matrix.target.ext }}
+            -name dc-launcher${{ matrix.target.ext }}
