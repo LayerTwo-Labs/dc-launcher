@@ -85,3 +85,10 @@ jobs:
             ${{ matrix.target.args }} \
             -debug -no-cache \
             -name dc-launcher${{ matrix.target.ext }}
+
+      - name: Upload Artifact
+        working-directory: dc-launcher
+        uses: actions/upload-artifact@v3
+        with:
+          name: dc-launcher${{ matrix.target.ext }}
+          path: dc-launcher${{ matrix.target.ext }}
