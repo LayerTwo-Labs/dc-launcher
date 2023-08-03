@@ -25,6 +25,9 @@ var testchainLinux []byte
 //go:embed binaries/bitassets-qt-linux
 var bitassetsLinux []byte
 
+//go:embed binaries/thunder-linux
+var thunderLinux []byte
+
 //go:embed chain.conf
 var chainConfBytes []byte
 
@@ -128,10 +131,16 @@ func ConfInit(as *AppState) error {
 
 		conf := confDir + string(os.PathSeparator) + chainProvider.DefaultConfName
 		if _, err := os.Stat(conf); os.IsNotExist(err) {
-			confBytes := chainConfBytes
-			confBytes = append(confBytes, "\ndatadir="+confDir...)
-			confBytes = append(confBytes, fmt.Sprintf("\nrpcport=%v", chainProvider.DefaultPort)...)
-			if k != "drivechain" {
+			var confBytes []byte
+			if k != "thunder" {
+				confBytes = chainConfBytes
+				confBytes = append(confBytes, "\ndatadir="+confDir...)
+				confBytes = append(confBytes, fmt.Sprintf("\nrpcport=%v", chainProvider.DefaultPort)...)
+				if k != "drivechain" {
+					confBytes = append(confBytes, fmt.Sprintf("\nslot=%v", chainProvider.DefaultSlot)...)
+				}
+			} else {
+				confBytes = append(confBytes, fmt.Sprintf("\nrpcport=%v", chainProvider.DefaultPort)...)
 				confBytes = append(confBytes, fmt.Sprintf("\nslot=%v", chainProvider.DefaultSlot)...)
 			}
 			err := os.WriteFile(conf, confBytes, 0o755)
@@ -171,8 +180,7 @@ func ConfInit(as *AppState) error {
 		}
 
 		// Write chain binary
-		// TODO: Only drivechain and testchain are supported for now
-		if k == "drivechain" || k == "testchain" || k == "bitassets" {
+		if k == "drivechain" || k == "testchain" || k == "bitassets" || k == "thunder" {
 			err = writeBinary(&chainData)
 			if err != nil {
 				println(err.Error())
@@ -243,6 +251,8 @@ func writeBinary(cd *ChainData) error {
 			binBytes = testchainLinux
 		case "bitassets":
 			binBytes = bitassetsLinux
+		case "thunder":
+			binBytes = thunderLinux
 		}
 	}
 	if len(binBytes) > 0 {

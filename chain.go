@@ -82,9 +82,12 @@ func LaunchChain(cd *ChainData, cs *ChainState, mui *MainUI) {
 	if cs.ChainStateUpdate.timer != nil && cs.ChainStateUpdate.quit != nil {
 		// TODO: Maybe restart?
 	} else {
-		csu := ChainStateUpdate{ID: cd.ID}
-		cs.ChainStateUpdate = csu
-		StartChainStateUpdate(cd, cs, mui)
+		// TODO: Thunder needs rpc
+		if cd.ID != "thunder" {
+			csu := ChainStateUpdate{ID: cd.ID}
+			cs.ChainStateUpdate = csu
+			StartChainStateUpdate(cd, cs, mui)
+		}
 	}
 
 	//p, err := getChainProcess(cd.BinName)
@@ -96,14 +99,32 @@ func LaunchChain(cd *ChainData, cs *ChainState, mui *MainUI) {
 	//return
 	//}
 
-	args := []string{"-conf=" + cd.ConfDir + string(os.PathSeparator) + cd.ConfName}
-	cmd := exec.Command(cd.BinDir+string(os.PathSeparator)+cd.BinName, args...)
+	if cd.ID == "thunder" {
 
-	err := cmd.Start()
-	if err != nil {
-		log.Fatal(err)
+		dataDir := cd.ConfDir
+		netAddr := fmt.Sprintf("127.0.0.1:%v", cd.Port)
+		dcAddr := fmt.Sprintf("127.0.0.1:%v", mui.as.dcd.Port)
+		args := []string{"-d", dataDir, "-n", netAddr, "-m", dcAddr, "-u", mui.as.dcd.RPCUser, "-p", mui.as.dcd.RPCPass}
+		cmd := exec.Command(cd.BinDir+string(os.PathSeparator)+cd.BinName, args...)
+		err := cmd.Start()
+		if err != nil {
+			log.Fatal(err)
+		}
+		cs.State = Running
+		mui.as.scs[cd.ID] = *cs
+		mui.Refresh()
+
+	} else {
+		args := []string{"-conf=" + cd.ConfDir + string(os.PathSeparator) + cd.ConfName}
+		println(args)
+		cmd := exec.Command(cd.BinDir+string(os.PathSeparator)+cd.BinName, args...)
+		err := cmd.Start()
+		if err != nil {
+			log.Fatal(err)
+		}
+		cs.State = Waiting
 	}
-	cs.State = Waiting
+
 	println(cd.BinName + " Started...")
 }
 
@@ -117,12 +138,20 @@ func StopChain(cd *ChainData, cs *ChainState, as *AppState) error {
 		}
 	}
 
-	req, err := MakeRpcRequest(cd, "stop", []interface{}{})
-	if err == nil {
-		defer req.Body.Close()
+	if cd.ID != "thunder" {
+		req, err := MakeRpcRequest(cd, "stop", []interface{}{})
+		if err == nil {
+			defer req.Body.Close()
+		}
 	}
+
 	p, err := getChainProcess(cd.BinName)
 	if p != nil && err == nil {
+		if cd.ID == "thunder" {
+			cs.State = Unknown
+			mui.as.scs[cd.ID] = *cs
+			mui.Refresh()
+		}
 		return p.Kill()
 	}
 	return err

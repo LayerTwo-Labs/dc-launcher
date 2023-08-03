@@ -65,7 +65,7 @@ func NewMainUI(as *AppState) *MainUI {
 	mui.contentContainer.Add(scrl)
 
 	as.w.SetContent(container.NewBorder(mui.headerContainer, mui.footerContainer, nil, nil, mui.contentContainer))
-	as.w.Resize(fyne.NewSize(540, 680))
+	as.w.Resize(fyne.NewSize(540, 720))
 	return mui
 }
 

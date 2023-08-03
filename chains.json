@@ -33,5 +33,17 @@
         "defaultConfName": "bitassets.conf",
         "defaultPort": 19005,
         "defaultSlot": 4
+    },
+    "thunder": {
+        "order": 3,
+        "id": "thunder",
+        "name": "Thunder",
+        "description": "A high performance largeblock sidechain",
+        "imageUrl": "",
+        "binName": "thunderd",
+        "defaultDir": ".thunder",
+        "defaultConfName": "thunder.conf",
+        "defaultPort": 19006,
+        "defaultSlot": 1
     }
 }
