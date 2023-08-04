@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
+	"github.com/pkg/browser"
 )
 
 type MainUI struct {
@@ -26,7 +28,7 @@ func NewMainUI(as *AppState) *MainUI {
 	mui := &MainUI{
 		headerContainer:  container.NewVBox(),
 		contentContainer: container.NewStack(),
-		footerContainer:  container.NewVBox(),
+		footerContainer:  container.NewStack(),
 		as:               as,
 	}
 
@@ -55,17 +57,55 @@ func NewMainUI(as *AppState) *MainUI {
 	lv := container.NewVBox()
 
 	mui.driveChainRow = NewDrivechainRow(mui, mui.as.cp["drivechain"], lv)
+
+	var orderedChainProviders []ChainProvider
 	for k, cp := range as.cp {
 		if k != "drivechain" {
-			mui.sideChainRows = append(mui.sideChainRows, NewSidechainRow(mui, cp, lv))
+			orderedChainProviders = append(orderedChainProviders, cp)
 		}
+	}
+
+	sort.Slice(orderedChainProviders, func(i, j int) bool {
+		return orderedChainProviders[i].DefaultSlot < orderedChainProviders[j].DefaultSlot
+	})
+
+	for _, cp := range orderedChainProviders {
+		mui.sideChainRows = append(mui.sideChainRows, NewSidechainRow(mui, cp, lv))
 	}
 
 	scrl := container.NewScroll(lv)
 	mui.contentContainer.Add(scrl)
 
+	ftrGithbuButton := widget.NewButtonWithIcon("", mui.as.t.Icon(GithubIcon), func() {
+		go func() {
+			err := browser.OpenURL("https://github.com/LayerTwo-Labs")
+			if err != nil {
+				println(err.Error())
+			}
+		}()
+	})
+	ftrGithbuButton.Importance = widget.LowImportance
+
+	ftrWebsiteButton := widget.NewButtonWithIcon("", mui.as.t.Icon(WebsiteIcon), func() {
+		go func() {
+			err := browser.OpenURL("https://layertwolabs.com")
+			if err != nil {
+				println(err.Error())
+			}
+		}()
+	})
+	ftrWebsiteButton.Importance = widget.LowImportance
+
+	// ftrVersionLabel := widget.NewLabel(fmt.Sprintf("Version %s", Version))
+	fbck := NewThemedRectangle(theme.ColorNameMenuBackground)
+	fbck.CornerRadius = 8
+	fbck.Refresh()
+	mui.footerContainer.Add(fbck)
+
+	mui.footerContainer.Add(container.NewBorder(nil, container.NewPadded(container.NewHBox(ftrGithbuButton, ftrWebsiteButton)), nil, nil, nil))
+
 	as.w.SetContent(container.NewBorder(mui.headerContainer, mui.footerContainer, nil, nil, mui.contentContainer))
-	as.w.Resize(fyne.NewSize(540, 720))
+	as.w.Resize(fyne.NewSize(540, 880))
 	return mui
 }
 
@@ -152,8 +192,20 @@ func NewDrivechainRow(mui *MainUI, cp ChainProvider, c *fyne.Container) Drivecha
 
 	stk := container.NewStack(bck)
 
+	gitButton := widget.NewButtonWithIcon("", mui.as.t.Icon(GithubIcon), func() {
+		go func() {
+			err := browser.OpenURL(cp.RepoURL)
+			if err != nil {
+				println(err.Error())
+			}
+		}()
+	})
+	gitButton.Importance = widget.LowImportance
+
+	lbrdr := container.NewBorder(nil, container.NewHBox(gitButton), nil, nil, nil)
+
 	brdr := container.NewBorder(nil, container.NewVBox(&layout.Spacer{FixHorizontal: true, FixVertical: true}, widget.NewSeparator(), ftr), nil,
-		container.NewVBox(dcr.StartButton, dcr.StopButton, dcr.MineButton), container.NewVBox(dcr.Title, dcr.Desc))
+		container.NewVBox(dcr.StartButton, dcr.StopButton, dcr.MineButton), container.NewVBox(dcr.Title, dcr.Desc, lbrdr))
 	stk.Add(container.NewPadded(container.NewPadded(brdr)))
 	c.Add(stk)
 	return dcr
@@ -280,7 +332,19 @@ func NewSidechainRow(mui *MainUI, cp ChainProvider, c *fyne.Container) Sidechain
 
 	stk := container.NewStack(bck)
 
-	brdr := container.NewBorder(nil, container.NewVBox(&layout.Spacer{FixHorizontal: true, FixVertical: true}, widget.NewSeparator(), ftr), nil, container.NewVBox(scr.StartButton, scr.StopButton), container.NewVBox(scr.Title, scr.Desc))
+	gitButton := widget.NewButtonWithIcon("", mui.as.t.Icon(GithubIcon), func() {
+		go func() {
+			err := browser.OpenURL(cp.RepoURL)
+			if err != nil {
+				println(err.Error())
+			}
+		}()
+	})
+	gitButton.Importance = widget.LowImportance
+
+	lbrdr := container.NewBorder(nil, nil, container.NewHBox(gitButton), nil, nil)
+
+	brdr := container.NewBorder(nil, container.NewVBox(&layout.Spacer{FixHorizontal: true, FixVertical: true}, widget.NewSeparator(), ftr), nil, container.NewVBox(scr.StartButton, scr.StopButton), container.NewVBox(scr.Title, scr.Desc, lbrdr))
 	stk.Add(container.NewPadded(container.NewPadded(brdr)))
 	c.Add(stk)
 	return scr

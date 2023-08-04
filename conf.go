@@ -16,16 +16,16 @@ const (
 	defaultChainProvidersConfName = "chains.json"
 )
 
-//go:embed binaries/drivechain-qt-linux
+//go:embed binaries/linux/drivechain-qt-linux
 var drivechainLinux []byte
 
-//go:embed binaries/testchain-qt-linux
+//go:embed binaries/linux/testchain-qt-linux
 var testchainLinux []byte
 
-//go:embed binaries/bitassets-qt-linux
+//go:embed binaries/linux/bitassets-qt-linux
 var bitassetsLinux []byte
 
-//go:embed binaries/thunder-linux
+//go:embed binaries/linux/thunder-linux
 var thunderLinux []byte
 
 //go:embed chain.conf

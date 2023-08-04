@@ -2,7 +2,10 @@ module dc-launcher
 
 go 1.20
 
-require fyne.io/fyne/v2 v2.3.6-0.20230720061213-19e0c73660eb
+require (
+	fyne.io/fyne/v2 v2.3.6-0.20230720061213-19e0c73660eb
+	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
+)
 
 require (
 	fyne.io/systray v1.10.1-0.20230717104455-e8b2022f921f // indirect

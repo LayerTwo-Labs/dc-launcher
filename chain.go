@@ -12,10 +12,10 @@ import (
 )
 
 type ChainProvider struct {
-	Order           int    `json:"order"`
 	ID              string `json:"id"`
 	Name            string `json:"name"`
 	Description     string `json:"description"`
+	RepoURL         string `json:"repoUrl"`
 	ImageURL        string `json:"imageUrl"`
 	BinName         string `json:"binName"`
 	DefaultDir      string `json:"defaultDir"`

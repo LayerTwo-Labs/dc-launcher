@@ -1,9 +1,9 @@
 {
     "drivechain": {
-        "order": 0,
         "id": "drivechain",
         "name": "Drivechain",
         "description": "BIP 300 & 301 enabled bitcoin",
+        "repoUrl": "https://github.com/LayerTwo-Labs/mainchain",
         "imageUrl": "",
         "binName": "drivechain-qt",
         "defaultDir": ".drivechain",
@@ -11,10 +11,10 @@
         "defaultPort": 18443 
     },
     "testchain": {
-        "order": 1,
         "id": "testchain",
         "name": "Testchain",
         "description": "A blank sidechain, based on Bitcoin Core 16.99",
+        "repoUrl": "https://github.com/LayerTwo-Labs/testchain",
         "imageUrl": "",
         "binName": "testchain",
         "defaultDir": ".testchain",
@@ -23,10 +23,10 @@
         "defaultSlot": 0
     },
     "bitassets": {
-        "order": 2,
         "id": "bitassets",
         "name": "BitAssets",
         "description": "A sidechain for issuing Bit-Art (NFTs) and digital assets (ICOs, tokens)",
+        "repoUrl": "https://github.com/LayerTwo-Labs/BitAssets",
         "imageUrl": "",
         "binName": "bitassets",
         "defaultDir": ".bitassets",
@@ -35,15 +35,15 @@
         "defaultSlot": 4
     },
     "thunder": {
-        "order": 3,
         "id": "thunder",
         "name": "Thunder",
         "description": "A high performance largeblock sidechain",
+        "repoUrl": "https://github.com/nchashch/thunder",
         "imageUrl": "",
         "binName": "thunderd",
         "defaultDir": ".thunder",
         "defaultConfName": "thunder.conf",
         "defaultPort": 19006,
-        "defaultSlot": 1
+        "defaultSlot": 9
     }
 }

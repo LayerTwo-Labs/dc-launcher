@@ -48,6 +48,14 @@ var homeIconRes fyne.Resource
 var calculatorIconBytes []byte
 var calculatorIconRes fyne.Resource
 
+//go:embed data/images/github.svg
+var githubIconBytes []byte
+var githubIconRes fyne.Resource
+
+//go:embed data/images/website.svg
+var websiteIconBytes []byte
+var websiteIconRes fyne.Resource
+
 const (
 	StartIcon      fyne.ThemeIconName = "start.svg"
 	StopIcon       fyne.ThemeIconName = "stop.svg"
@@ -59,6 +67,8 @@ const (
 	ParentIcon     fyne.ThemeIconName = "parent.svg"
 	HomeIcon       fyne.ThemeIconName = "home.svg"
 	CalculatorIcon fyne.ThemeIconName = "calculator.svg"
+	GithubIcon     fyne.ThemeIconName = "github.svg"
+	WebsiteIcon    fyne.ThemeIconName = "website.svg"
 )
 
 var darkScheme = map[fyne.ThemeColorName]color.Color{
@@ -120,6 +130,8 @@ func NewCustomTheme() *CustomTheme {
 	parentIconRes = theme.NewThemedResource(fyne.NewStaticResource(string(ParentIcon), parentIconBytes))
 	homeIconRes = theme.NewThemedResource(fyne.NewStaticResource(string(HomeIcon), homeIconBytes))
 	calculatorIconRes = theme.NewThemedResource(fyne.NewStaticResource(string(CalculatorIcon), calculatorIconBytes))
+	githubIconRes = theme.NewThemedResource(fyne.NewStaticResource(string(GithubIcon), githubIconBytes))
+	websiteIconRes = theme.NewThemedResource(fyne.NewStaticResource(string(WebsiteIcon), websiteIconBytes))
 	return &t
 }
 
@@ -159,6 +171,10 @@ func (t CustomTheme) Icon(name fyne.ThemeIconName) fyne.Resource {
 		return homeIconRes
 	case CalculatorIcon:
 		return calculatorIconRes
+	case GithubIcon:
+		return githubIconRes
+	case WebsiteIcon:
+		return websiteIconRes
 	default:
 		return theme.DefaultTheme().Icon(name)
 	}
