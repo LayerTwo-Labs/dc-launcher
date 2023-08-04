@@ -78,7 +78,7 @@ func NewMainUI(as *AppState) *MainUI {
 
 	ftrGithbuButton := widget.NewButtonWithIcon("", mui.as.t.Icon(GithubIcon), func() {
 		go func() {
-			err := browser.OpenURL("https://github.com/LayerTwo-Labs")
+			err := browser.OpenURL("https://github.com/LayerTwo-Labs/dc-launcher")
 			if err != nil {
 				println(err.Error())
 			}
