@@ -1,12 +1,16 @@
 package main
 
 import (
+	"archive/zip"
 	"bufio"
+	"bytes"
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
@@ -27,6 +31,12 @@ var bitassetsLinux []byte
 
 //go:embed binaries/linux/thunder-linux
 var thunderLinux []byte
+
+//go:embed binaries/linux/bitcoin-qt-linux
+var latestCoreLinux []byte
+
+//go:embed binaries/linux/bitnames.zip
+var bitnamesZipLinux []byte
 
 //go:embed chain.conf
 var chainConfBytes []byte
@@ -132,16 +142,26 @@ func ConfInit(as *AppState) error {
 		conf := confDir + string(os.PathSeparator) + chainProvider.DefaultConfName
 		if _, err := os.Stat(conf); os.IsNotExist(err) {
 			var confBytes []byte
-			if k != "thunder" {
+			if k == "thunder" {
+				confBytes = append(confBytes, fmt.Sprintf("\nrpcport=%v", chainProvider.DefaultPort)...)
+				confBytes = append(confBytes, fmt.Sprintf("\nslot=%v", chainProvider.DefaultSlot)...)
+			} else if k == "latestcore" {
+				confBytes = append(confBytes, "chain=regtest"...)
+				confBytes = append(confBytes, "\nserver=1"...)
+				confBytes = append(confBytes, "\nsplash=0"...)
+				confBytes = append(confBytes, fmt.Sprintf("\nslot=%v", chainProvider.DefaultSlot)...)
+				confBytes = append(confBytes, "\ndatadir="+confDir...)
+				confBytes = append(confBytes, "\n[regtest]"...)
+				confBytes = append(confBytes, "\nrpcuser=user"...)
+				confBytes = append(confBytes, "\nrpcpassword=password"...)
+				confBytes = append(confBytes, fmt.Sprintf("\nrpcport=%v", chainProvider.DefaultPort)...)
+			} else {
 				confBytes = chainConfBytes
 				confBytes = append(confBytes, "\ndatadir="+confDir...)
 				confBytes = append(confBytes, fmt.Sprintf("\nrpcport=%v", chainProvider.DefaultPort)...)
 				if k != "drivechain" {
 					confBytes = append(confBytes, fmt.Sprintf("\nslot=%v", chainProvider.DefaultSlot)...)
 				}
-			} else {
-				confBytes = append(confBytes, fmt.Sprintf("\nrpcport=%v", chainProvider.DefaultPort)...)
-				confBytes = append(confBytes, fmt.Sprintf("\nslot=%v", chainProvider.DefaultSlot)...)
 			}
 			err := os.WriteFile(conf, confBytes, 0o755)
 			println("Writing " + conf)
@@ -157,7 +177,11 @@ func ConfInit(as *AppState) error {
 		chainData.IsDrivechain = k == "drivechain"
 		chainData.BinName = chainProvider.BinName
 		chainData.ConfName = chainProvider.DefaultConfName
-		chainData.BinDir = confDir
+		if k == "bitnames" {
+			chainData.BinDir = confDir + string(os.PathSeparator) + "usr" + string(os.PathSeparator) + "bin"
+		} else {
+			chainData.BinDir = confDir
+		}
 		chainData.ConfDir = confDir
 
 		err = loadConf(&chainData)
@@ -180,7 +204,7 @@ func ConfInit(as *AppState) error {
 		}
 
 		// Write chain binary
-		if k == "drivechain" || k == "testchain" || k == "bitassets" || k == "thunder" {
+		if k == "drivechain" || k == "testchain" || k == "bitassets" || k == "thunder" || k == "latestcore" || k == "bitnames" {
 			err = writeBinary(&chainData)
 			if err != nil {
 				println(err.Error())
@@ -253,6 +277,10 @@ func writeBinary(cd *ChainData) error {
 			binBytes = bitassetsLinux
 		case "thunder":
 			binBytes = thunderLinux
+		case "latestcore":
+			binBytes = latestCoreLinux
+		case "bitnames":
+			return WriteBitnamesZipContents(cd)
 		}
 	}
 	if len(binBytes) > 0 {
@@ -262,5 +290,67 @@ func writeBinary(cd *ChainData) error {
 		}
 	}
 
+	return nil
+}
+
+func IsDirEmpty(name string) (bool, error) {
+	f, err := os.Open(name)
+	if err != nil {
+		return false, err
+	}
+	defer f.Close()
+
+	// read in ONLY one file
+	_, err = f.Readdir(1)
+
+	// and if the file is EOF... well, the dir is empty.
+	if err == io.EOF {
+		return true, nil
+	}
+	return false, err
+}
+
+func WriteBitnamesZipContents(cd *ChainData) error {
+	dst := cd.ConfDir
+	reader := bytes.NewReader(bitnamesZipLinux)
+	zipReader, err := zip.NewReader(reader, int64(len(bitnamesZipLinux)))
+	if err != nil {
+		return err
+	}
+	for _, f := range zipReader.File {
+		filePath := filepath.Join(dst, f.Name)
+		// fmt.Println("unzipping file ", filePath)
+
+		if !strings.HasPrefix(filePath, filepath.Clean(dst)+string(os.PathSeparator)) {
+			fmt.Println("invalid file path")
+			return err
+		}
+		if f.FileInfo().IsDir() {
+			// fmt.Println("creating directory...")
+			os.MkdirAll(filePath, os.ModePerm)
+			continue
+		}
+
+		if err := os.MkdirAll(filepath.Dir(filePath), os.ModePerm); err != nil {
+			panic(err)
+		}
+
+		dstFile, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
+		if err != nil {
+			panic(err)
+		}
+
+		fileInArchive, err := f.Open()
+		if err != nil {
+			panic(err)
+		}
+
+		if _, err := io.Copy(dstFile, fileInArchive); err != nil {
+			panic(err)
+		}
+
+		dstFile.Close()
+		fileInArchive.Close()
+	}
 	return nil
 }

@@ -45,5 +45,29 @@
         "defaultConfName": "thunder.conf",
         "defaultPort": 19006,
         "defaultSlot": 9
+    },
+    "latestcore": {
+        "id": "latestcore",
+        "name": "Latest Core",
+        "description": "Latest Bitcoin Core + BIPS 118, 119 & 345",
+        "repoUrl": "https://github.com/LayerTwo-Labs/zcash-sidechain",
+        "imageUrl": "",
+        "binName": "latestcore",
+        "defaultDir": ".latestcore",
+        "defaultConfName": "latestcore.conf",
+        "defaultPort": 19007,
+        "defaultSlot": 11
+    },
+    "bitnames": {
+        "id": "bitnames",
+        "name": "BitNames",
+        "description": "Own one username that you use everywhere — replaces DNS, logging in, and email",
+        "repoUrl": "https://github.com/Ash-L2L/sidechains/tree/ash/bitnames",
+        "imageUrl": "",
+        "binName": "bitnames-qt",
+        "defaultDir": ".bitnames",
+        "defaultConfName": "bitnames.conf",
+        "defaultPort": 19008,
+        "defaultSlot": 2
     }
 }

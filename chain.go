@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"syscall"
 	"time"
 
 	"github.com/biter777/processex"
@@ -115,14 +116,37 @@ func LaunchChain(cd *ChainData, cs *ChainState, mui *MainUI) {
 		mui.Refresh()
 
 	} else {
-		args := []string{"-conf=" + cd.ConfDir + string(os.PathSeparator) + cd.ConfName}
-		println(args)
-		cmd := exec.Command(cd.BinDir+string(os.PathSeparator)+cd.BinName, args...)
-		err := cmd.Start()
-		if err != nil {
-			log.Fatal(err)
+		if cd.ID == "bitnames" {
+			args := []string{}
+			cmd := exec.Command(cd.ConfDir+string(os.PathSeparator)+"start.sh", args...)
+			cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true, Foreground: true}
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+			err := cmd.Start()
+			if err != nil {
+				log.Fatal(err)
+			}
+		} else {
+			args := []string{"-conf=" + cd.ConfDir + string(os.PathSeparator) + cd.ConfName}
+			cmd := exec.Command(cd.BinDir+string(os.PathSeparator)+cd.BinName, args...)
+			cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true, Foreground: true}
+			cmd.Stdout = os.Stdout
+			err := cmd.Start()
+			if err != nil {
+				log.Fatal(err)
+			}
+			cs.State = Waiting
 		}
-		cs.State = Waiting
+	}
+
+	if cd.ID == "latestcore" {
+		d := cd.ConfDir + string(os.PathSeparator) + "regtest" + string(os.PathSeparator) + "wallets"
+		empty, err := IsDirEmpty(d)
+		if empty || err != nil {
+			time.AfterFunc(time.Duration(1)*time.Second, func() {
+				LatestCoreCreateWallet(mui.as, cd, cs)
+			})
+		}
 	}
 
 	println(cd.BinName + " Started...")
@@ -273,6 +297,22 @@ func CreateSidechainProposal(as *AppState, cd *ChainData, cs *ChainState) bool {
 		if err != nil {
 			println(err.Error())
 		}
+	}
+	return true
+}
+
+func LatestCoreCreateWallet(as *AppState, cd *ChainData, cs *ChainState) bool {
+	if cd.ID != "latestcore" {
+		return false
+	}
+
+	println("Creating latest core wallet...")
+	pr, err := MakeRpcRequest(cd, "createwallet", []interface{}{"wallet", false, false, "", true, false, true, false})
+	if err != nil {
+		println(err.Error())
+		return false
+	} else if pr.StatusCode == 200 {
+		return true
 	}
 	return true
 }
