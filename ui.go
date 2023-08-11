@@ -344,8 +344,23 @@ func NewSidechainRow(mui *MainUI, cp ChainProvider, c *fyne.Container) Sidechain
 
 	lbrdr := container.NewBorder(nil, nil, container.NewHBox(gitButton), nil, nil)
 
-	brdr := container.NewBorder(nil, container.NewVBox(&layout.Spacer{FixHorizontal: true, FixVertical: true}, widget.NewSeparator(), ftr), nil, container.NewVBox(scr.StartButton, scr.StopButton), container.NewVBox(scr.Title, scr.Desc, lbrdr))
-	stk.Add(container.NewPadded(container.NewPadded(brdr)))
+	if cp.ID == "bitnames" {
+		imp := widget.NewRichTextWithText("You likely need to run: sudo apt install qtbase5-dev")
+		imp.Segments[0].(*widget.TextSegment).Style = widget.RichTextStyle{
+			Alignment: fyne.TextAlignLeading,
+			SizeName:  theme.SizeNameText,
+			ColorName: theme.ColorGray,
+			TextStyle: fyne.TextStyle{Italic: true, Bold: true},
+		}
+		imp.Wrapping = fyne.TextWrapWord
+
+		brdr := container.NewBorder(nil, container.NewVBox(&layout.Spacer{FixHorizontal: true, FixVertical: true}, widget.NewSeparator(), ftr), nil, container.NewVBox(scr.StartButton, scr.StopButton), container.NewVBox(scr.Title, scr.Desc, imp, lbrdr))
+		stk.Add(container.NewPadded(container.NewPadded(brdr)))
+	} else {
+		brdr := container.NewBorder(nil, container.NewVBox(&layout.Spacer{FixHorizontal: true, FixVertical: true}, widget.NewSeparator(), ftr), nil, container.NewVBox(scr.StartButton, scr.StopButton), container.NewVBox(scr.Title, scr.Desc, lbrdr))
+		stk.Add(container.NewPadded(container.NewPadded(brdr)))
+	}
+
 	c.Add(stk)
 	return scr
 }
